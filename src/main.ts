@@ -1,22 +1,27 @@
-import { ViteSSG } from 'vite-ssg'
-import { setupLayouts } from 'virtual:generated-layouts'
-import App from './App.vue'
-import type { UserModule } from './types'
-import generatedRoutes from '~pages'
-
 import '@unocss/reset/tailwind.css'
-import './styles/main.css'
+import './styles/main.scss'
 import 'uno.css'
 
-const routes = setupLayouts(generatedRoutes)
+import { createApp } from 'vue'
+import { createRouter, createWebHistory } from 'vue-router'
+// import routes from 'virtual:generated-pages'
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import { setupLayouts } from 'virtual:generated-layouts'
+import App from './App.vue'
+import generatedRoutes from '~pages'
+import 'virtual:svg-icons-register'
 
-// https://github.com/antfu/vite-ssg
-export const createApp = ViteSSG(
-  App,
-  { routes, base: import.meta.env.BASE_URL },
-  (ctx) => {
-    // install all modules under `modules/`
-    Object.values(import.meta.glob<{ install: UserModule }>('./modules/*.ts', { eager: true }))
-      .forEach(i => i.install?.(ctx))
-  },
-)
+const routes = setupLayouts(generatedRoutes)
+const app = createApp(App)
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+})
+
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
+
+app.use(router)
+app.use(pinia)
+app.mount('#app')
